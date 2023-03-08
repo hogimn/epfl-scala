@@ -48,7 +48,9 @@ object ParallelCountChange extends ParallelCountChangeInterface:
    *  coins for the specified amount of money.
    */
   def countChange(money: Int, coins: List[Int]): Int =
-    ???
+    if money == 0 then 1
+    else if money < 0 || coins.isEmpty then 0
+    else countChange(money, coins.tail) + countChange(money - coins.head, coins)
 
   type Threshold = (Int, List[Int]) => Boolean
 
@@ -56,17 +58,25 @@ object ParallelCountChange extends ParallelCountChangeInterface:
    *  specified list of coins for the specified amount of money.
    */
   def parCountChange(money: Int, coins: List[Int], threshold: Threshold): Int =
-    ???
+    if (money == 0) 1
+    else if (money < 0 || coins.isEmpty) 0
+    else if threshold(money, coins) then
+      countChange(money, coins)
+    else
+      val (change1, change2) = parallel(
+        parCountChange(money, coins.tail, threshold),
+        parCountChange(money - coins.head, coins, threshold))
+      change1 + change2
 
   /** Threshold heuristic based on the starting money. */
   def moneyThreshold(startingMoney: Int): Threshold =
-    ???
+    (money, _) => money <= startingMoney * 2 / 3
 
   /** Threshold heuristic based on the total number of initial coins. */
   def totalCoinsThreshold(totalCoins: Int): Threshold =
-    ???
+    (_, coins) => coins.length <= totalCoins * 2 / 3
 
 
   /** Threshold heuristic based on the starting money and the initial list of coins. */
   def combinedThreshold(startingMoney: Int, allCoins: List[Int]): Threshold =
-    ???
+    (money, coins) => money * coins.length <= startingMoney * allCoins.length / 2
