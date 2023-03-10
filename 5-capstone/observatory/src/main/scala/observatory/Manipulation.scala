@@ -1,5 +1,7 @@
 package observatory
 
+import observatory.Visualization.predictTemperature
+
 import scala.collection.parallel.CollectionConverters.given
 
 /**
@@ -13,7 +15,7 @@ object Manipulation extends ManipulationInterface:
     *         returns the predicted temperature at this location
     */
   def makeGrid(temperatures: Iterable[(Location, Temperature)]): GridLocation => Temperature =
-    ???
+    gridLoc => predictTemperature(temperatures, Location(gridLoc.lat, gridLoc.lon))
 
   /**
     * @param temperaturess Sequence of known temperatures over the years (each element of the collection
@@ -21,7 +23,12 @@ object Manipulation extends ManipulationInterface:
     * @return A function that, given a latitude and a longitude, returns the average temperature at this location
     */
   def average(temperaturess: Iterable[Iterable[(Location, Temperature)]]): GridLocation => Temperature =
-    ???
+    gridLoc =>
+      val temps: Iterable[Temperature] =
+        temperaturess
+          .map(makeGrid)
+          .map(f => f(gridLoc))
+      temps.sum / temps.size
 
   /**
     * @param temperatures Known temperatures
@@ -29,7 +36,7 @@ object Manipulation extends ManipulationInterface:
     * @return A grid containing the deviations compared to the normal temperatures
     */
   def deviation(temperatures: Iterable[(Location, Temperature)], normals: GridLocation => Temperature): GridLocation => Temperature =
-    ???
+    gridLoc => makeGrid(temperatures)(gridLoc) - normals(gridLoc)
 
 
 

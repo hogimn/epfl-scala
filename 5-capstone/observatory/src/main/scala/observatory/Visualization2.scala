@@ -3,6 +3,12 @@ package observatory
 import com.sksamuel.scrimage.ImmutableImage
 import com.sksamuel.scrimage.pixels.Pixel
 import com.sksamuel.scrimage.metadata.ImageMetadata
+import observatory.Interaction.tileLocation
+import observatory.Visualization.interpolateColor
+
+import scala.collection.parallel.ParSeq
+import scala.collection.parallel.CollectionConverters.given
+import scala.math._
 
 /**
   * 5th milestone: value-added information visualization
@@ -25,7 +31,10 @@ object Visualization2 extends Visualization2Interface:
     d10: Temperature,
     d11: Temperature
   ): Temperature =
-    ???
+    d00 * (1 - point.x) * (1 - point.y) +
+      d10 * point.x * (1 - point.y) +
+      d01 * (1 - point.x) * point.y +
+      d11 * point.x * point.y
 
   /**
     * @param grid Grid to visualize
@@ -38,5 +47,53 @@ object Visualization2 extends Visualization2Interface:
     colors: Iterable[(Temperature, Color)],
     tile: Tile
   ): ImmutableImage =
-    ???
+    val (width, height) = (256, 256)
+    val alpha: Int = 127
+
+    val pixels: IndexedSeq[(Int, Int)] =
+      for
+        x <- 0 until height
+        y <- 0 until width
+      yield (x, y)
+
+    val locations: ParSeq[(Int, Int, Location)] =
+      pixels
+        .par
+        .map {
+          case (x, y) =>
+            (x, y, Tile(y + tile.y * width, x + tile.x * height, tile.zoom + 8))
+        }
+        .map {
+          case (x, y, tile) =>
+            (x, y, tileLocation(tile))
+        }
+
+    val predictedTemps: ParSeq[(Int, Int, Temperature)] =
+      locations map { case (x, y, Location(lat, lon)) =>
+        val x0: Int = floor(lon).toInt
+        val x1: Int = ceil(lon).toInt
+        val y0: Int = ceil(lat).toInt
+        val y1: Int = floor(lat).toInt
+        val d00: Temperature = grid(GridLocation(y0, x0))
+        val d01: Temperature = grid(GridLocation(y1, x0))
+        val d10: Temperature = grid(GridLocation(y0, x1))
+        val d11: Temperature = grid(GridLocation(y1, x1))
+        (x, y, bilinearInterpolation(CellPoint(lon - x0, y0 - lat),
+          d00, d01, d10, d11))
+      }
+
+    val coloredLocations: ParSeq[(Int, Int, Color)] =
+      predictedTemps map {
+        case (x, y, temp) => (x, y, interpolateColor(colors, temp))
+      }
+
+    val pixelArray: Array[Pixel] =
+      coloredLocations
+        .map {
+          case (x, y, color) =>
+            Pixel(x, y, color.red, color.green, color.blue, alpha)
+        }
+        .toArray
+
+    ImmutableImage.wrapPixels(width, height, pixelArray, ImageMetadata.empty)
 
