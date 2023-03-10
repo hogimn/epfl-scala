@@ -35,7 +35,7 @@ object StackOverflow extends StackOverflow:
 
   /** Main function */
   def main(args: Array[String]): Unit =
-    val inputFileLocation: String = "/stackoverflow/stackoverflow-grading.csv"
+    val inputFileLocation: String = "/stackoverflow/stackoverflow.csv"
     val resource = getClass.getResourceAsStream(inputFileLocation)
     val inputFile = Source.fromInputStream(resource)(Codec.UTF8)
  
@@ -94,7 +94,12 @@ class StackOverflow extends StackOverflowInterface with Serializable:
 
   /** Group the questions and answers together */
   def groupedPostings(postings: RDD[Posting]): RDD[(QID, Iterable[(Question, Answer)])] =
-    ???
+    val questions = postings.filter(_.postingType == 1)
+    val answers = postings.filter(_.postingType == 2)
+    val questionsKeyed = questions.map(post => (post.id, post))
+    val answersKeyed = answers.map(post => (post.parentId.get, post))
+    val questionsWithAnswers = questionsKeyed.join(answersKeyed)
+    questionsWithAnswers.groupByKey()
 
 
   /** Compute the maximum score for each posting */
@@ -110,7 +115,13 @@ class StackOverflow extends StackOverflowInterface with Serializable:
         i += 1
       highScore
 
-    ???
+    grouped.map {
+      case (_, entries) =>
+        val answers = entries.map(p => p._2).toArray
+        val question = entries.head._1
+        val score = answerHighScore(answers)
+        (question, score)
+    }
 
 
   /** Compute the vectors for the kmeans */
@@ -123,7 +134,11 @@ class StackOverflow extends StackOverflowInterface with Serializable:
           val index = ls.indexOf(lang)
           if (index >= 0) Some(index) else None
 
-    ???
+    scored.flatMap { (question, score) =>
+      firstLangInTag(question.tags, langs) match
+        case Some(index) => (index * langSpread, score) :: Nil
+        case None => Nil
+    }.persist()
 
 
   /** Sample the vectors */
@@ -176,7 +191,10 @@ class StackOverflow extends StackOverflowInterface with Serializable:
     // TODO: Compute the groups of points that are the closest to each mean,
     // and then compute the new means of each group of points. Finally, compute
     // a Map that associate the old `means` values to their new values
-    val newMeansMap: scala.collection.Map[(Int, Int), (Int, Int)] = ???
+    val newMeansMap: scala.collection.Map[(Int, Int), (Int, Int)] =
+      vectors.groupBy(p => findClosest(p, means))
+        .mapValues(averageVectors)
+        .collectAsMap()
     val newMeans: Array[(Int, Int)] = means.map(oldMean => newMeansMap(oldMean))
     val distance = euclideanDistance(means, newMeans)
 
@@ -266,10 +284,16 @@ class StackOverflow extends StackOverflowInterface with Serializable:
     val closestGrouped = closest.groupByKey()
 
     val median = closestGrouped.mapValues { vs =>
-      val langLabel: String   = ??? // most common language in the cluster
-      val langPercent: Double = ??? // percent of the questions in the most common language
-      val clusterSize: Int    = ???
-      val medianScore: Int    = ???
+      val lang = vs.groupBy(_._1).view.mapValues(_.size).maxBy(_._2)
+      val langLabel: String   = langs(lang._1 / langSpread) // most common language in the cluster
+      val langPercent: Double = lang._2 * 100 / vs.size // percent of the questions in the most common language
+      val clusterSize: Int    = vs.size
+      val (firstHalf, secondHalf) = vs.map(_._2).toArray.sorted.splitAt(vs.size / 2)
+      val medianScore: Int =
+        if firstHalf.length == secondHalf.length then
+          (firstHalf.last + secondHalf.head) / 2
+        else
+          secondHalf.head
 
       (langLabel, langPercent, clusterSize, medianScore)
     }
