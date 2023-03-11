@@ -25,7 +25,10 @@ object Extraction extends ExtractionInterface:
 
   private def getRDDFromResource(resource: String): RDD[String] =
     val fileStream = Source.getClass.getResourceAsStream(resource)
-    sc.makeRDD(Source.fromInputStream(fileStream).getLines.toSeq)
+    sc.makeRDD(
+      Source.fromInputStream(fileStream)
+        .getLines
+        .toSeq)
 
   private def fahrenheitToCelsius(temperature: Double): Double =
     (temperature - 32.0) / 1.8
@@ -41,9 +44,12 @@ object Extraction extends ExtractionInterface:
       getRDDFromResource(stationsFile)
         .map(line => line.split(",", -1))
         .filter {
-          case Array(_, _, "", _) => false
-          case Array(_, _, _, "") => false
-          case _ => true
+          case Array(_, _, "", _) =>
+            false
+          case Array(_, _, _, "") =>
+            false
+          case _ =>
+            true
         }
         .map(a => ((a(0), a(1)), Location(a(2).toDouble, a(3).toDouble)))
 

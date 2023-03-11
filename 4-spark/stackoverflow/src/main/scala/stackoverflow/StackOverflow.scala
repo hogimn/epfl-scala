@@ -99,6 +99,7 @@ class StackOverflow extends StackOverflowInterface with Serializable:
     val questionsKeyed = questions.map(post => (post.id, post))
     val answersKeyed = answers.map(post => (post.parentId.get, post))
     val questionsWithAnswers = questionsKeyed.join(answersKeyed)
+
     questionsWithAnswers.groupByKey()
 
 
@@ -134,11 +135,11 @@ class StackOverflow extends StackOverflowInterface with Serializable:
           val index = ls.indexOf(lang)
           if (index >= 0) Some(index) else None
 
-    scored.flatMap { (question, score) =>
-      firstLangInTag(question.tags, langs) match
+    scored.flatMap(
+      (question, score) => firstLangInTag(question.tags, langs) match
         case Some(index) => (index * langSpread, score) :: Nil
         case None => Nil
-    }.persist()
+    ).persist()
 
 
   /** Sample the vectors */
@@ -284,11 +285,20 @@ class StackOverflow extends StackOverflowInterface with Serializable:
     val closestGrouped = closest.groupByKey()
 
     val median = closestGrouped.mapValues { vs =>
-      val lang = vs.groupBy(_._1).view.mapValues(_.size).maxBy(_._2)
+      val lang = vs.groupBy(_._1)
+        .view
+        .mapValues(_.size)
+        .maxBy(_._2)
+
       val langLabel: String   = langs(lang._1 / langSpread) // most common language in the cluster
       val langPercent: Double = lang._2 * 100 / vs.size // percent of the questions in the most common language
       val clusterSize: Int    = vs.size
-      val (firstHalf, secondHalf) = vs.map(_._2).toArray.sorted.splitAt(vs.size / 2)
+
+      val (firstHalf, secondHalf) = vs.map(_._2)
+        .toArray
+        .sorted
+        .splitAt(vs.size / 2)
+
       val medianScore: Int =
         if firstHalf.length == secondHalf.length then
           (firstHalf.last + secondHalf.head) / 2

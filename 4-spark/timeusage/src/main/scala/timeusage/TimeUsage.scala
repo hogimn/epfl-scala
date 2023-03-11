@@ -17,7 +17,7 @@ object TimeUsage extends TimeUsageInterface:
   val spark: SparkSession =
     SparkSession
       .builder()
-      .appName("Time Usage")
+      .appName("timeusage")
       .master("local")
       .getOrCreate()
 
@@ -142,9 +142,20 @@ object TimeUsage extends TimeUsageInterface:
     // Hint: you want to create a complex column expression that sums other columns
     //       by using the `+` operator between them
     // Hint: don’t forget to convert the value to hours
-    val primaryNeedsProjection: Column = primaryNeedsColumns.reduce(_ + _).divide(60).as("primaryNeeds")
-    val workProjection: Column = workColumns.reduce(_ + _).divide(60).as("work")
-    val otherProjection: Column = otherColumns.reduce(_ + _).divide(60).as("other")
+    val primaryNeedsProjection: Column = primaryNeedsColumns
+      .reduce(_ + _)
+      .divide(60)
+      .as("primaryNeeds")
+
+    val workProjection: Column = workColumns
+      .reduce(_ + _)
+      .divide(60)
+      .as("work")
+
+    val otherProjection: Column = otherColumns
+      .reduce(_ + _)
+      .divide(60)
+      .as("other")
 
     df
       .select(workingStatusProjection, sexProjection, ageProjection, primaryNeedsProjection, workProjection, otherProjection)

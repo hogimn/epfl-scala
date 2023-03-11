@@ -49,17 +49,16 @@ def boxBlurKernel(src: Img, x: Int, y: Int, radius: Int): RGBA =
   val count = (maxX - minX + 1) * (maxY - minY + 1)
 
   var j = minY
-  while (j <= maxY) {
+  while j <= maxY do
     var i = minX
-    while (i <= maxX) {
+    while i <= maxX do
       redSum += red(src(i, j))
       greenSum += green(src(i, j))
       blueSum += blue(src(i, j))
       alphaSum += alpha(src(i, j))
       i += 1
-    }
     j += 1
-  }
+
   rgba(redSum / count, greenSum / count, blueSum / count, alphaSum / count)
 
 val forkJoinPool = ForkJoinPool()

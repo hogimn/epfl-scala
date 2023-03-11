@@ -21,8 +21,7 @@ object Interaction extends InteractionInterface:
     val n: Int = 1 << tile.zoom
     Location(
       180 / Math.PI * atan(sinh(Math.PI * (1 - 2 * tile.y / n))),
-      tile.x / n * 360 - 180
-    )
+      tile.x / n * 360 - 180)
 
   /**
     * @param temperatures Known temperatures

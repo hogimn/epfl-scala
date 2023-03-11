@@ -146,7 +146,8 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet:
       left.contains(x)
     else if elem.text < x.text then
       right.contains(x)
-    else true
+    else
+      true
 
   def incl(x: Tweet): TweetSet =
     if x.text < elem.text then
@@ -176,6 +177,7 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet:
         max = t
     )
     max
+
   override def descendingByRetweetAcc(acc: TweetList): TweetList =
     val max = mostRetweeted
     Cons(max, remove(max).descendingByRetweetAcc(acc))

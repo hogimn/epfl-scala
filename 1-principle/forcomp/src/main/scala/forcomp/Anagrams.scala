@@ -95,9 +95,12 @@ object Anagrams extends AnagramsInterface:
         f <- (0 to freq).toList
         rest <- combinations(tail)
       yield
-        if f < 1 then rest
-        else (char, f) :: rest
-    case Nil => List(Nil)
+        if f < 1 then
+          rest
+        else
+          (char, f) :: rest
+    case Nil =>
+      List(Nil)
 
   /** Subtracts occurrence list `y` from occurrence list `x`.
    *
@@ -157,7 +160,8 @@ object Anagrams extends AnagramsInterface:
    */
   def sentenceAnagrams(sentence: Sentence): List[Sentence] =
     def sentenceAnagramsOcc(occ: Occurrences): List[Sentence] = occ match
-      case Nil => List(Nil)
+      case Nil =>
+        List(Nil)
       case _ =>
         for
           newOcc <- combinations(occ) if newOcc.nonEmpty

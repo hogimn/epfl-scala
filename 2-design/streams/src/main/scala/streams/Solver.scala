@@ -30,7 +30,9 @@ trait Solver extends GameDef:
    * that are inside the terrain.
    */
   def neighborsWithHistory(b: Block, history: List[Move]): LazyList[(Block, List[Move])] =
-    b.legalNeighbors.map((b, m) => (b, m :: history)).to(LazyList)
+    b.legalNeighbors
+      .map((b, m) => (b, m :: history))
+      .to(LazyList)
 
   /**
    * This function returns the list of neighbors without the block
@@ -68,13 +70,13 @@ trait Solver extends GameDef:
            explored: Set[Block]): LazyList[(Block, List[Move])] = initial match
     case LazyList() => LazyList.empty
     case _ =>
-      val blocksWithHistory =
+      val blockToHistory =
         for
           (b, h) <- initial
           bh <- newNeighborsOnly(neighborsWithHistory(b, h), explored)
         yield bh
-      val exploredUpdated = explored ++ blocksWithHistory.map(_._1)
-      blocksWithHistory #::: from(blocksWithHistory, exploredUpdated)
+      val exploredUpdated = explored ++ blockToHistory.map(_._1)
+      blockToHistory #::: from(blockToHistory, exploredUpdated)
 
 
   /**

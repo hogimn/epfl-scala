@@ -57,8 +57,10 @@ case class Fork(
   val centerY: Float = nw.centerY + nw.size / 2
   val size: Float = nw.size * 2
   val mass: Float = nw.mass + ne.mass + sw.mass + se.mass
-  val massX: Float = (nw.mass * nw.massX + ne.mass * ne.massX + sw.mass * sw.massX + se.mass * se.massX) / mass
-  val massY: Float = (nw.mass * nw.massY + ne.mass * ne.massY + sw.mass * sw.massY + se.mass * se.massY) / mass
+  val massX: Float = (nw.mass * nw.massX + ne.mass * ne.massX +
+                      sw.mass * sw.massX + se.mass * se.massX) / mass
+  val massY: Float = (nw.mass * nw.massY + ne.mass * ne.massY +
+                      sw.mass * sw.massY + se.mass * se.massY) / mass
   val total: Int = nw.total + ne.total + sw.total + se.total
 
   def insert(b: Body): Fork =
@@ -76,9 +78,11 @@ case class Fork(
 case class Leaf(centerX: Float, centerY: Float, size: Float, bodies: coll.Seq[Body])
 extends Quad:
   private val massSum: Float = bodies.map(_.mass).sum
-  val (mass, massX, massY) = (massSum : Float,
+  val (mass, massX, massY) = (
+    massSum : Float,
     bodies.map(body => body.mass * body.x).sum / massSum: Float,
-    bodies.map(body => body.mass * body.y).sum / massSum: Float)
+    bodies.map(body => body.mass * body.y).sum / massSum: Float
+  )
 
   val total: Int = bodies.length
   def insert(b: Body): Quad =
@@ -169,19 +173,24 @@ class SectorMatrix(val boundaries: Boundaries, val sectorPrecision: Int) extends
 
   def +=(b: Body): SectorMatrix =
     val x =
-      if b.x <= boundaries.minX then 0
-      else if b.x >= boundaries.maxX then sectorPrecision - 1
+      if b.x <= boundaries.minX then
+        0
+      else if b.x >= boundaries.maxX then
+        sectorPrecision - 1
       else
         val xShift = b.x - boundaries.minX
         val xSectorSize = boundaries.width / sectorPrecision
         (xShift / xSectorSize).intValue
     val y =
-      if b.y <= boundaries.minY then 0
-      else if b.y >= boundaries.maxY then sectorPrecision - 1
+      if b.y <= boundaries.minY then
+        0
+      else if b.y >= boundaries.maxY then
+        sectorPrecision - 1
       else
         val yShift = b.y - boundaries.minY
         val ySectorSize = boundaries.height / sectorPrecision
         (yShift / ySectorSize).intValue
+
     matrix(y * sectorPrecision + x) += b
     this
 

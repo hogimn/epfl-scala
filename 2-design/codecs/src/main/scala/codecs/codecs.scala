@@ -104,9 +104,9 @@ trait ObjectEncoder[-A] extends Encoder[A]:
     * fields of `this` encoder and fields of `that` encoder.
     */
   def zip[B](that: ObjectEncoder[B]): ObjectEncoder[(A, B)] =
-    ObjectEncoder.fromFunction { case (a, b) =>
-      Json.Obj(this.encode(a).fields ++ that.encode(b).fields)
-    }
+    ObjectEncoder.fromFunction((a, b) =>
+      Json.Obj(this.encode(a).fields ++
+               that.encode(b).fields))
 
 object ObjectEncoder:
 
@@ -121,7 +121,8 @@ object ObjectEncoder:
     * named according to the supplied `name` and containing the encoded value.
     */
   def field[A](name: String)(using encoder: Encoder[A]): ObjectEncoder[A] =
-    ObjectEncoder.fromFunction(a => Json.Obj(Map(name -> encoder.encode(a))))
+    ObjectEncoder.fromFunction(a =>
+      Json.Obj(Map(name -> encoder.encode(a))))
 
 
 /**
@@ -141,9 +142,9 @@ trait Decoder[+A]:
     * or `None` if at least one failed.
     */
   def zip[B](that: Decoder[B]): Decoder[(A, B)] =
-    Decoder.fromFunction { json =>
-      this.decode(json).zip(that.decode(json))
-    }
+    Decoder.fromFunction(json =>
+      this.decode(json)
+        .zip(that.decode(json)))
 
   /**
     * Transforms this `Decoder[A]` into a `Decoder[B]`, given a transformation function
@@ -152,7 +153,8 @@ trait Decoder[+A]:
     * This operation is also known as “map”.
     */
   def transform[B](f: A => B): Decoder[B] =
-    Decoder.fromFunction(json => this.decode(json).map(f))
+    Decoder.fromFunction(json =>
+      this.decode(json).map(f))
 
 object Decoder extends DecoderInstances:
 
@@ -181,8 +183,10 @@ trait DecoderInstances:
       case Json.Num(n) =>
         if n.isValidInt then
           Some(n.toInt)
-        else None
-      case _ => None
+        else
+          None
+      case _ =>
+        None
     }
   }
 
@@ -190,8 +194,10 @@ trait DecoderInstances:
   // TODO Define a given value of type `Decoder[String]`
   given Decoder[String] = {
     Decoder.fromFunction {
-      case Json.Str(s) => Some(s)
-      case _ => None
+      case Json.Str(s) =>
+        Some(s)
+      case _ =>
+        None
     }
   }
 
@@ -199,8 +205,10 @@ trait DecoderInstances:
   // TODO Define a given value of type `Decoder[Boolean]`
   given Decoder[Boolean] = {
     Decoder.fromFunction {
-      case Json.Bool(b) => Some(b)
-      case _ => None
+      case Json.Bool(b) =>
+        Some(b)
+      case _ =>
+        None
     }
   }
 
@@ -245,7 +253,7 @@ trait PersonCodecs:
   given Decoder[Person] =
   Decoder.field[String]("name")
     .zip(Decoder.field[Int]("age"))
-    .transform { case (name, age) => new Person(name, age) }
+    .transform((name, age) => new Person(name, age))
 
 
 case class Contacts(people: List[Person])
@@ -259,13 +267,17 @@ trait ContactsCodecs:
   // array of values of type `Person` (reuse the `Person` codecs)
   given Encoder[Contacts] =
     ObjectEncoder.field[List[Person]]("people")
-      .transform { case Contacts(people) => people }
+      .transform {
+        case Contacts(people) => people
+      }
 
   given Decoder[Contacts] =
     Decoder.field[List[Person]]("people")
       .transform {
-        case x :: xs => Contacts(x :: xs)
-        case Nil => Contacts(List())
+        case x :: xs =>
+          Contacts(x :: xs)
+        case Nil =>
+          Contacts(List())
       }
 
 

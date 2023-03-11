@@ -40,7 +40,8 @@ class KMeans extends KMeansInterface:
     closest
 
   def classify(points: ParSeq[Point], means: ParSeq[Point]): ParMap[Point, ParSeq[Point]] =
-    means.map(mean => mean -> ParSeq.empty[Point]).toMap ++
+    means.map(mean =>
+      mean -> ParSeq.empty[Point]).toMap ++
       points.groupBy(point => findClosest(point, means))
 
   def findAverage(oldMean: Point, points: ParSeq[Point]): Point = if points.isEmpty then oldMean else
@@ -59,11 +60,11 @@ class KMeans extends KMeansInterface:
 
   def converged(eta: Double, oldMeans: ParSeq[Point], newMeans: ParSeq[Point]): Boolean =
     var i = 0
-    while (i < oldMeans.size) {
+    while i < oldMeans.size do
       if (oldMeans(i).squareDistance(newMeans(i)) > eta)
         return false
       i += 1
-    }
+
     true
 
   @tailrec

@@ -11,17 +11,24 @@ enum Expr:
 object Calculator extends CalculatorInterface:
  import Expr.*
 
-  def computeValues(
-      namedExpressions: Map[String, Signal[Expr]]): Map[String, Signal[Double]] =
-    namedExpressions.view.mapValues(signal => Signal(eval(signal(), namedExpressions))).toMap
+  def computeValues(namedExpressions: Map[String, Signal[Expr]]): Map[String, Signal[Double]] =
+    namedExpressions
+      .view
+      .mapValues(signal => Signal(eval(signal(), namedExpressions)))
+      .toMap
 
   def eval(expr: Expr, references: Map[String, Signal[Expr]])(using Signal.Caller): Double =
     expr match {
-      case Literal(value) => value
-      case Plus(a, b) => eval(a, references) + eval(b, references)
-      case Minus(a, b) => eval(a, references) - eval(b, references)
-      case Times(a, b) => eval(a, references) * eval(b, references)
-      case Divide(a, b) => eval(a, references) / eval(b, references)
+      case Literal(value) =>
+        value
+      case Plus(a, b) =>
+        eval(a, references) + eval(b, references)
+      case Minus(a, b) =>
+        eval(a, references) - eval(b, references)
+      case Times(a, b) =>
+        eval(a, references) * eval(b, references)
+      case Divide(a, b) =>
+        eval(a, references) / eval(b, references)
       case Ref(name) =>
         val referenceExpr = getReferenceExpr(name, references)
         eval(referenceExpr, references - name)

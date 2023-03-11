@@ -24,15 +24,23 @@ trait Huffman extends HuffmanInterface:
 
   // Part 1: Basics
   def weight(tree: CodeTree): Int = tree match
-    case Leaf(_, weight) => weight
-    case Fork(_, _, _, weight) => weight
+    case Leaf(_, weight) =>
+      weight
+    case Fork(_, _, _, weight) =>
+      weight
 
   def chars(tree: CodeTree): List[Char] = tree match
-    case Leaf(char, _) => List(char)
-    case Fork(_, _, chars, _) => chars
+    case Leaf(char, _) =>
+      List(char)
+    case Fork(_, _, chars, _) =>
+      chars
 
   def makeCodeTree(left: CodeTree, right: CodeTree) =
-    Fork(left, right, chars(left) ::: chars(right), weight(left) + weight(right))
+    Fork(
+      left,
+      right,
+      chars(left) ::: chars(right),
+      weight(left) + weight(right))
 
   // Part 2: Generating Huffman trees
 
@@ -73,14 +81,19 @@ trait Huffman extends HuffmanInterface:
   def times(chars: List[Char]): List[(Char, Int)] =
     @tailrec
     def timesAcc(chars: List[Char], acc: List[(Char, Int)]): List[(Char, Int)] = chars match
-      case Nil => acc
-      case x :: xs => timesAcc(xs, incrementCharCount(x, acc))
+      case Nil =>
+        acc
+      case x :: xs =>
+        timesAcc(xs, incrementCharCount(x, acc))
 
     def incrementCharCount(char: Char, acc: List[(Char, Int)]): List[(Char, Int)] = acc match
       case (key, count) :: tail =>
-        if key == char then (key, count + 1) :: tail
-        else (key, count) :: incrementCharCount(char, tail)
-      case Nil => (char, 1) :: Nil
+        if key == char then
+          (key, count + 1) :: tail
+        else
+          (key, count) :: incrementCharCount(char, tail)
+      case Nil =>
+        (char, 1) :: Nil
 
     timesAcc(chars, Nil)
 
@@ -94,14 +107,19 @@ trait Huffman extends HuffmanInterface:
   def makeOrderedLeafList(freqs: List[(Char, Int)]): List[Leaf] =
     @tailrec
     def makeOrderedLeafListAcc(freqs: List[(Char, Int)], acc: List[Leaf]): List[Leaf] = freqs match
-      case Nil => acc
-      case (key, freq) :: tail => makeOrderedLeafListAcc(tail, insertLeaf(key, freq, acc))
+      case Nil =>
+        acc
+      case (key, freq) :: tail =>
+        makeOrderedLeafListAcc(tail, insertLeaf(key, freq, acc))
 
     def insertLeaf(char: Char, freq: Int, acc: List[Leaf]): List[Leaf] = acc match
-      case Nil => Leaf(char, freq) :: Nil
+      case Nil =>
+        Leaf(char, freq) :: Nil
       case Leaf(c, f) :: tail =>
-        if freq <= f then Leaf(char, freq) :: Leaf(c, f) :: tail
-        else Leaf(c, f) :: insertLeaf(char, freq, tail)
+        if freq <= f then
+          Leaf(char, freq) :: Leaf(c, f) :: tail
+        else
+          Leaf(c, f) :: insertLeaf(char, freq, tail)
 
     makeOrderedLeafListAcc(freqs, Nil)
 
@@ -109,8 +127,10 @@ trait Huffman extends HuffmanInterface:
    * Checks whether the list `trees` contains only one single code tree.
    */
   def singleton(trees: List[CodeTree]): Boolean = trees match
-    case head :: Nil => true
-    case _ => false
+    case _ :: Nil =>
+      true
+    case _ =>
+      false
 
   /**
    * The parameter `trees` of this function is a list of code trees ordered
@@ -125,8 +145,10 @@ trait Huffman extends HuffmanInterface:
    * unchanged.
    */
   def combine(trees: List[CodeTree]): List[CodeTree] = trees match
-    case first :: second :: tail => makeCodeTree(first, second) :: tail
-    case _ => trees
+    case first :: second :: tail =>
+      makeCodeTree(first, second) :: tail
+    case _ =>
+      trees
 
   /**
    * This function will be called in the following way:
@@ -164,12 +186,16 @@ trait Huffman extends HuffmanInterface:
   def decode(tree: CodeTree, bits: List[Bit]): List[Char] =
     @tailrec
     def decodeAcc(t: CodeTree, bits: List[Bit], acc: List[Char]): List[Char] = t match
-      case Leaf(char, _) => decodeAcc(tree, bits, acc ::: List(char))
+      case Leaf(char, _) =>
+        decodeAcc(tree, bits, acc ::: List(char))
       case Fork(left, right, _, _) => bits match
-        case Nil => acc
+        case Nil =>
+          acc
         case bit :: tail =>
-          if bit == 0 then decodeAcc(left, tail, acc)
-          else decodeAcc(right, tail, acc)
+          if bit == 0 then
+            decodeAcc(left, tail, acc)
+          else
+            decodeAcc(right, tail, acc)
 
     decodeAcc(tree, bits, Nil)
 
@@ -201,25 +227,35 @@ trait Huffman extends HuffmanInterface:
   def encode(tree: CodeTree)(text: List[Char]): List[Bit] =
     @tailrec
     def encodeAcc(t: CodeTree, text: List[Char], acc: List[Bit]): List[Bit] = text match
-      case Nil => acc
+      case Nil =>
+        acc
       case char :: tail => t match
-        case Leaf(_, _) => encodeAcc(tree, tail, acc)
+        case Leaf(_, _) =>
+          encodeAcc(tree, tail, acc)
         case Fork(left, right, _, _) =>
-          if containsChar(char)(left) then encodeAcc(left, text, acc ::: List(0))
-          else if containsChar(char)(right) then encodeAcc(right, text, acc ::: List(1))
-          else throw Error(s"$char unreachable")
+          if containsChar(char)(left) then
+            encodeAcc(left, text, acc ::: List(0))
+          else if containsChar(char)(right) then
+            encodeAcc(right, text, acc ::: List(1))
+          else
+            throw Error(s"$char unreachable")
 
     def containsChar(char: Char)(tree: CodeTree): Boolean =
       @tailrec
       def charExists(chars: List[Char]): Boolean = chars match
         case x :: xs =>
-          if x == char then true
-          else charExists(xs)
-        case Nil => false
+          if x == char then
+            true
+          else
+            charExists(xs)
+        case Nil =>
+          false
 
       tree match
-        case Leaf(c, _) => char == c
-        case Fork(_, _, chars, _) => charExists(chars)
+        case Leaf(c, _) =>
+          char == c
+        case Fork(_, _, chars, _) =>
+          charExists(chars)
 
     encodeAcc(tree, text, Nil)
 
@@ -232,8 +268,13 @@ trait Huffman extends HuffmanInterface:
    * the code table `table`.
    */
   def codeBits(table: CodeTable)(char: Char): List[Bit] = table match
-    case Nil => throw Error(s"$char not found")
-    case (key, bits) :: tail => if key == char then bits else codeBits(tail)(char)
+    case Nil =>
+      throw Error(s"$char not found")
+    case (key, bits) :: tail =>
+      if key == char then
+        bits
+      else
+        codeBits(tail)(char)
 
   /**
    * Given a code tree, create a code table which contains, for every character in the
@@ -245,10 +286,12 @@ trait Huffman extends HuffmanInterface:
    */
   def convert(tree: CodeTree): CodeTable =
     def convertAcc(tree: CodeTree, acc: List[Bit]): CodeTable = tree match
-      case Leaf(char, _) => List((char, acc))
-      case Fork(left, right, _, _) => mergeCodeTables(
-        convertAcc(left, acc ::: List(0)),
-        convertAcc(right, acc ::: List(1)))
+      case Leaf(char, _) =>
+        List((char, acc))
+      case Fork(left, right, _, _) =>
+        mergeCodeTables(
+          convertAcc(left, acc ::: List(0)),
+          convertAcc(right, acc ::: List(1)))
 
     convertAcc(tree, Nil)
   /**
@@ -265,7 +308,9 @@ trait Huffman extends HuffmanInterface:
    * and then uses it to perform the actual encoding.
    */
   def quickEncode(tree: CodeTree)(text: List[Char]): List[Bit] = text match
-    case c :: cs => codeBits(convert(tree))(c) ::: quickEncode(tree)(cs)
-    case Nil => Nil
+    case c :: cs =>
+      codeBits(convert(tree))(c) ::: quickEncode(tree)(cs)
+    case Nil =>
+      Nil
 
 object Huffman extends Huffman

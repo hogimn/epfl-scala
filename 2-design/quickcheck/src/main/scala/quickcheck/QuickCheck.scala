@@ -30,8 +30,10 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap:
 
   property("gen4") = forAll { (h1 : H, h2: H) =>
     def sort(h : H) : List[Int] =
-      if isEmpty(h) then List.empty
-      else findMin(h) :: sort(deleteMin(h))
+      if isEmpty(h) then
+        List.empty
+      else
+        findMin(h) :: sort(deleteMin(h))
 
     sort(meld(h1, h2)) ==
       sort(meld(deleteMin(h1), insert(findMin(h1), h2)))
